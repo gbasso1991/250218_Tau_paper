@@ -78,10 +78,10 @@ def lector_resultados(path):
 f_idc=['135kHz','100dA']
 indentif_dd = '_NEdd_'
 
-files_NE_dd=[f for f in os.listdir(os.path.join(os.getcwd(),'resultados')) if indentif_dd in f]
+files_NE_dd=[f for f in os.listdir(os.path.join(os.getcwd(),'resultados_2025','tablas')) if indentif_dd in f]
     
 files_NE_dd.sort()
-paths_NE_dd = [os.path.join(os.getcwd(),'resultados',f) for f in files_NE_dd]
+paths_NE_dd = [os.path.join(os.getcwd(),'resultados_2025','tablas',f) for f in files_NE_dd]
 
 # Obtener la lista de archivos en el directorio seleccionado
 for i, e in enumerate(files_NE_dd):
@@ -501,11 +501,15 @@ promedios_tau=np.array(promedios_tau)*1e9
 errores_tau=np.array(errores_tau)*1e9
 
 #%%
+
+label_1='$\\tan (\phi_1) /\omega$'
+label_2='$M(t)$ fitting'
 fig, ax = plt.subplots(figsize=(7, 3.5), constrained_layout=True)
+ax.errorbar(x=temperaturas_intervalo,y=promedios_tau,xerr=err_temperatura,yerr=errores_tau,capsize=4,
+fmt='.-',color='C1',label=label_1)
 
-ax.errorbar(x=temperaturas_intervalo,y=promedios_tau,xerr=err_temperatura,yerr=errores_tau,capsize=4,fmt='.-',label='Giuliano')
-
-ax.errorbar(x=temperaturas_intervalo_pedro,y=promedios_tau_pedro,xerr=err_temperatura_pedro,yerr=errores_tau_pedro,capsize=4,fmt='.-',label='Pedro')
+ax.errorbar(x=temperaturas_intervalo_pedro,y=promedios_tau_pedro,xerr=err_temperatura_pedro,yerr=errores_tau_pedro,
+capsize=4,fmt='.-',color='C2',label=label_2)
 
 
 #ax.errorbar(x=temperatura,y=tau_ed,yerr=tau_ed_stderr,capsize=4,fmt='.-')
@@ -514,13 +518,13 @@ ax.errorbar(x=temperaturas_intervalo_pedro,y=promedios_tau_pedro,xerr=err_temper
 # ax.errorbar(x=temp_2,y=tau_2,yerr=tau_2_stderr,capsize=4,fmt='.-')
 # ax.errorbar(x=temp_3,y=tau_3,yerr=tau_3_stderr,capsize=4,fmt='.-')
 
-plt.legend()
+plt.legend(ncol=1,fontsize=13)
 plt.grid()
 plt.xlabel('Temperature (°C)')
 plt.ylabel(r'$\tau$ (s)')
 plt.xlim(-21,21)
 # plt.title(f'135 kHz - 38 kA/m - {Concentracion_NE_dd*1e3:.2f} g/L')
-plt.savefig('tau_135_38_ddiluid_vs_tau_Pedro.png',dpi=400)
+plt.savefig('tau_135_38_ddiluid_vs_tau_Pedro.png',facecolor='w',dpi=400)
 plt.show()
 
 # %%
