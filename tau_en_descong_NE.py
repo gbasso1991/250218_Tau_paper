@@ -247,6 +247,59 @@ axs[1].grid()
 plt.suptitle('NE@citrato - 135 kHz - 38 kA/m\nComparativa por concentración', fontsize=18)
 #plt.savefig('tau_SAR_NE_135_10_comparativa_por_concentracion.png', dpi=300, facecolor='w')
 plt.show()
+#%% 28 Mar 25 Salvo tabla T|tau para Pedro
+
+data1 = np.column_stack((Temps_NE_dd[0], taus_NE_dd[0]))
+np.savetxt('Temp_vs_tau_1er_armonico_1.txt', data1, header='Temperatura (°C) |  tau(s) ',fmt=['%18.2f','%.2e'], delimiter='\t')
+
+data2 = np.column_stack((Temps_NE_dd[1], taus_NE_dd[1]))
+np.savetxt('Temp_vs_tau_1er_armonico_2.txt', data2, header='Temperatura (°C) |  tau (s)',fmt=['%18.2f','%.2e'], delimiter='\t')
+
+data3 = np.column_stack((Temps_NE_dd[2], taus_NE_dd[2]))
+np.savetxt('Temp_vs_tau_1er_armonico_3.txt', data3, header='Temperatura (°C) |  tau (s)',fmt=['%18.2f','%.2e'], delimiter='\t')
+#%% Para levantar las temps y tau0 originales, uso lector_resultados()
+path1,path2,path3=
+
+meta1, files1, time1,temperatura1,  Mr1, Hc1, campo_max1, mag_max1, xi_M_01, frecuencia_fund1, magnitud_fund 1, dphi_fem1, SAR1, tau1, N1,= lector_resultados(path1)
+meta2, files2, time2,temperatura2,  Mr2, Hc2, campo_max2, mag_max2, xi_M_02, frecuencia_fund2, magnitud_fund 2, dphi_fem2, SAR2, tau2, N2,= lector_resultados(path2)
+meta3, files3, time3,temperatura3,  Mr3, Hc3, campo_max3, mag_max3, xi_M_03, frecuencia_fund3, magnitud_fund 3, dphi_fem3, SAR3, tau3, N3,= lector_resultados(path3)
+
+
+
+
+
+#%%   
+fig, ax = plt.subplots(figsize=(9, 4), constrained_layout=True)
+# Gráfico 1
+
+ax.plot(Temps_NE_dd[0], taus_NE_dd[0],'.-',label=f'1')
+ax.plot(Temps_NE_dd[1], taus_NE_dd[1],'.-',label=f'2')
+ax.plot(Temps_NE_dd[2], taus_NE_dd[2],'.-',label=f'3')
+ax.text(0.85,0.35,'NEdd\n$f$ = 135 kHz  $H_0$ = 38 kA/m\nC = 7,4 g/L',bbox=dict(alpha=0.9),transform=ax.transAxes,ha='center',va='center')
+ax.legend(ncol=3)
+ax.grid()
+ax.set_xlabel('T (ºC)')
+ax.set_ylabel(r'$\tau$ (s)')
+ax.set_ylabel(r'$\tau$ (s)')
+ax.set_title(r'$\tau$ vs $T$ - Fundamental')
+plt.savefig('tau_vs_T_fundamental.png',dpi=300)
+
+#%%
+
+path_espectro_NE='135kHz_100dA_100Mss_NEdd070_Espectro.txt'
+data_H = np.loadtxt(path_espectro_NE,skiprows=4,max_rows=1, usecols=(0,1,2))
+data_M = np.loadtxt(path_espectro_NE,skiprows=7, usecols=(0,1,2))
+
+# Separar las columnas en tres arrays diferentes
+f_H,amp_H,fase_H = data_H[0],data_H[1],data_H[2]
+f_M = data_M[:, 0]  
+amp_M = data_M[:, 1]  
+fase_M = data_M[:, 2]  
+
+
+
+
+
 
 #%% Promedio los tau por temperatura
 
