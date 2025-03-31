@@ -12,7 +12,7 @@ import chardet
 import re
 from scipy.optimize import curve_fit
 from glob import glob
-#%% Funcion de lectura
+# Funcion de lectura
 def lector_resultados(path):
     '''return meta, files, time,temperatura,  Mr, Hc, campo_max, mag_max, xi_M_0, frecuencia_fund, magnitud_fund , dphi_fem, SAR, tau, N'''
     
@@ -260,12 +260,14 @@ plt.show()
 #%% Para levantar las temps y tau0 originales, uso lector_resultados()
 
 paths_24=glob('data_original/**/*Analisis_2024*/*resultados*',recursive=True)
-
+paths_24.sort()
 meta1, files1, time1,temperatura1,  Mr1, Hc1, campo_max1, mag_max1, xi_M_01, frecuencia_fund1, magnitud_fund_1, dphi_fem1, SAR1, tau1, N1= lector_resultados(paths_24[0])
 meta2, files2, time2,temperatura2,  Mr2, Hc2, campo_max2, mag_max2, xi_M_02, frecuencia_fund2, magnitud_fund_2, dphi_fem2, SAR2, tau2, N2= lector_resultados(paths_24[1])
 meta3, files3, time3,temperatura3,  Mr3, Hc3, campo_max3, mag_max3, xi_M_03, frecuencia_fund3, magnitud_fund_3, dphi_fem3, SAR3, tau3, N3= lector_resultados(paths_24[2])
 #%%
 paths_tau_25=glob('data_original/**/*Analisis_2025*/*taus_ord*',recursive=True)
+paths_tau_25.sort()
+
 #%%
 data1 = np.loadtxt(paths_tau_25[0],skiprows=1, usecols=(1,2,3))
 tau1_1 = data1[:,0]
@@ -284,37 +286,70 @@ tau3_5 = data3[:,2]
 
 #%%
 
-fig, (ax,ax2,ax3) = plt.subplots(nrows=3,figsize=(9, 4), constrained_layout=True)
+fig, (ax,ax2,ax3) = plt.subplots(nrows=3,figsize=(10, 6),sharex=True,sharey=True, constrained_layout=True)
 
-ax1.set_title('medida 1')
+ax.set_title('medida 1',loc='left')
 ax.plot(temperatura1, tau1_1,'.-',label=f'f1')
 ax.plot(temperatura1, tau1_3,'.-',label=f'f3')
 ax.plot(temperatura1, tau1_5,'.-',label=f'f5')
-ax.text(0.85,0.35,'NEdd\n$f$ = 135 kHz  $H_0$ = 38 kA/m\nC = 7,4 g/L',bbox=dict(alpha=0.9),transform=ax.transAxes,ha='center',va='center')
+#ax.text(0.85,0.35,'NEdd\n$f$ = 135 kHz  $H_0$ = 38 kA/m\nC = 7,4 g/L',bbox=dict(alpha=0.9),transform=ax.transAxes,ha='center',va='center')
 
-ax2.set_title('medida 2')
+ax2.set_title('medida 2',loc='left')
 ax2.plot(temperatura2, tau2_1,'.-',label=f'f1')
 ax2.plot(temperatura2, tau2_3,'.-',label=f'f3')
 ax2.plot(temperatura2, tau2_5,'.-',label=f'f5')
 
-ax3.set_title('medida 3')
+ax3.set_title('medida 3',loc='left')
 ax3.plot(temperatura3[:-1], tau3_1,'.-',label=f'f1')
 ax3.plot(temperatura3[:-1], tau3_3,'.-',label=f'f3')
 ax3.plot(temperatura3[:-1], tau3_5,'.-',label=f'f5')
 
+for a in [ax,ax2,ax3]:
+    a.legend(ncol=3)
+    a.grid()
+    a.set_ylabel(r'$\tau$ (s)')
+ax3.set_xlabel('T (ºC)')
+plt.suptitle(r'$\tau$ vs $T$ - por medidas')
+plt.savefig('tau_vs_T_por_medida.png',dpi=300)
+plt.show()
+#%%
+fig2, (ax,ax2,ax3) = plt.subplots(nrows=3,figsize=(10, 6),sharex=True, constrained_layout=True)
 
+ax.set_title('Fundamental',loc='left')
+ax.plot(temperatura1, tau1_1,'.-',label=f'medida 1')
+ax.plot(temperatura2, tau2_1,'.-',label=f'medida 2')
+ax.plot(temperatura3[:-1], tau3_1,'.-',label=f'medida 3')
 
+ax2.set_title('f$_3$',loc='left')
+ax2.plot(temperatura1, tau1_3,'.-',label=f'medida 1')
+ax2.plot(temperatura2, tau2_3,'.-',label=f'medida 2')
+ax2.plot(temperatura3[:-1], tau3_3,'.-',label=f'medida 3')
 
-ax.legend(ncol=3)
-ax.grid()
-ax.set_xlabel('T (ºC)')
+ax3.set_title('f$_5$',loc='left')
+ax3.plot(temperatura1, tau1_5,'.-',label=f'medida 1')
+ax3.plot(temperatura2, tau2_5,'.-',label=f'medida 2')
+ax3.plot(temperatura3[:-1], tau3_5,'.-',label=f'medida 3')
+
+for a in [ax,ax2,ax3]:
+    a.legend(ncol=3)
+    a.grid()
+    a.set_ylabel(r'$\tau$ (s)')    
+ax3.set_xlabel('T (ºC)')
 ax.set_ylabel(r'$\tau$ (s)')
-ax.set_ylabel(r'$\tau$ (s)')
-ax.set_title(r'$\tau$')
+plt.suptitle(r'$\tau$ vs $T$ - por armónico')
+plt.savefig('tau_vs_T_por_armonico.png',dpi=300)
+plt.show()
+
+
+
+
+
+
+
 
 
 #%%
-fig, axs = plt.subplots(4, 1, figsize=(9, 7), constrained_layout=True)
+fig, axs = plt.subplots(4, 1, figsize=(9, 7),sharex=True, constrained_layout=True)
 
 axs[0].plot(temperatura1, taus_NE_dd[0],'v-',label=f'{Concentracion_NE_dd*1e3} g/L')
 axs[0].plot(temperatura1, taus_NE_dd[1],'v-',label=f'{Concentracion_NE_dd*1e3} g/L')
