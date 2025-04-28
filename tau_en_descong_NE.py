@@ -1,6 +1,6 @@
 #%%
 """
-Tau vs T para distintas concentraciones
+Tau vs T 
 Giuliano Basso
 """
 import os
@@ -12,7 +12,7 @@ import chardet
 import re
 from scipy.optimize import curve_fit
 from glob import glob
-# Funcion de lectura
+#%% Funciones
 def lector_resultados(path):
     '''return meta, files, time,temperatura,  Mr, Hc, campo_max, mag_max, xi_M_0, frecuencia_fund, magnitud_fund , dphi_fem, SAR, tau, N'''
     
@@ -73,6 +73,42 @@ def lector_resultados(path):
     
     return meta, files, time,temperatura,  Mr, Hc, campo_max, mag_max, xi_M_0, frecuencia_fund, magnitud_fund , dphi_fem, SAR, tau, N
 
+def lector_ciclos(path):
+    '''return meta, files, time,temperatura,  Mr, Hc, campo_max, mag_max, xi_M_0, frecuencia_fund, magnitud_fund , dphi_fem, SAR, tau, N'''
+    
+    with open(path, 'rb') as f:
+        codificacion = chardet.detect(f.read())['encoding']
+        
+    # Leer las primeras 6 líneas y crear un diccionario de meta
+    meta = {}
+    with open(path, 'r', encoding='utf-8') as f:
+        for i in range(6):
+            line = f.readline().strip()
+            if i == 0:
+                match = re.search(r'Temperatura_=_([-+]?\d+\.\d+)', line)
+                if match:
+                    key = 'Temperatura'
+                    value = float(match.group(1))
+                    meta[key] = value
+            else:
+                match = re.search(r'(.+)_=_([-+]?\d+\.\d+)', line)
+                if match:
+                    key = match.group(1).replace(' ', '_')
+                    value = float(match.group(2))
+                    meta[key] = value
+    # Leer los datos del archivo
+    data = pd.read_table(path, header=6,
+                         names=('Tiempo_(s)','Campo_(V.s)','Magnetizacion_(V.s)','Campo_(kA/m)','Magnetizacion_(A/m)'),
+                         usecols=(0, 1, 2, 3, 4),
+                         decimal='.',
+                         engine='python',
+                         encoding=codificacion)
+
+    t = pd.Series(data['Tiempo_(s)']).to_numpy(dtype=float)
+    H_kAm = pd.Series(data['Campo_(kA/m)']).to_numpy(dtype=float)
+    M_Am = pd.Series(data['Magnetizacion_(A/m)']).to_numpy(dtype=float)
+        
+    return meta,t, H_kAm , M_Am
 
 #%% Diluida al 25 %
 f_idc=['135kHz','100dA']
@@ -285,7 +321,6 @@ tau3_3 = data3[:,1]
 tau3_5 = data3[:,2]
 
 #%%
-
 fig, (ax,ax2,ax3) = plt.subplots(nrows=3,figsize=(10, 6),sharex=True,sharey=True, constrained_layout=True)
 
 ax.set_title('medida 1',loc='left')
@@ -310,7 +345,7 @@ for a in [ax,ax2,ax3]:
     a.set_ylabel(r'$\tau$ (s)')
 ax3.set_xlabel('T (ºC)')
 plt.suptitle(r'$\tau$ vs $T$ - por medidas')
-plt.savefig('tau_vs_T_por_medida.png',dpi=300)
+#plt.savefig('tau_vs_T_por_medida.png',dpi=300)
 plt.show()
 #%%
 fig2, (ax,ax2,ax3) = plt.subplots(nrows=3,figsize=(10, 6),sharex=True, constrained_layout=True)
@@ -337,23 +372,16 @@ for a in [ax,ax2,ax3]:
 ax3.set_xlabel('T (ºC)')
 ax.set_ylabel(r'$\tau$ (s)')
 plt.suptitle(r'$\tau$ vs $T$ - por armónico')
-plt.savefig('tau_vs_T_por_armonico.png',dpi=300)
+#plt.savefig('tau_vs_T_por_armonico.png',dpi=300)
 plt.show()
 
-
-
-
-
-
-
-
-
 #%%
-fig, axs = plt.subplots(4, 1, figsize=(9, 7),sharex=True, constrained_layout=True)
+fig, axs = plt.subplots(2, 1, figsize=(9, 7),sharex=True, constrained_layout=True)
 
 axs[0].plot(temperatura1, taus_NE_dd[0],'v-',label=f'{Concentracion_NE_dd*1e3} g/L')
-axs[0].plot(temperatura1, taus_NE_dd[1],'v-',label=f'{Concentracion_NE_dd*1e3} g/L')
-axs[0].plot(temperatura1, taus_NE_dd[2],'v-',label=f'{Concentracion_NE_dd*1e3} g/L')
+axs[0].plot(temperatura1[:-3], taus_NE_dd[1],'v-',label=f'{Concentracion_NE_dd*1e3} g/L')
+axs[0].plot(temperatura1, taus_NE_dd[2][:-3],'v-',label=f'{Concentracion_NE_dd*1e3} g/L')
+
 
 axs[0].set_ylabel(r'$\tau$ (s)')
 axs[0].set_title(r'$\tau$ (s)')
@@ -399,11 +427,6 @@ f_H,amp_H,fase_H = data_H[0],data_H[1],data_H[2]
 f_M = data_M[:, 0]  
 amp_M = data_M[:, 1]  
 fase_M = data_M[:, 2]  
-
-
-
-
-
 
 #%% Promedio los tau por temperatura
 
@@ -471,9 +494,7 @@ print("--------------------------------------------------------------------")
 for i in range(len(temperaturas_intervalo)):
     print(f"{temperaturas_intervalo[i]:.2f} - {temperaturas_intervalo[i] + intervalo_temperatura:.2f} °C   |   {promedios_tau[i]:.2e}")
 
-#indices = [0,32,42,92] 
-
-#%% PLOT TAU
+#%% PLOT TAU SAR
 import matplotlib as mpl
 fig, ax = plt.subplots(figsize=(7, 3.5), constrained_layout=True)
 ax.errorbar(x=temperaturas_intervalo,y=promedios_tau,xerr=err_temperatura,yerr=errores_tau,capsize=4,fmt='.-')
@@ -521,72 +542,17 @@ plt.xlabel('Temperatura (°C)')
 plt.ylabel(r'$\tau$ (ns)')
 plt.xlim(-21, 21)
 # plt.title(f'135 kHz - 38 kA/m - {Concentracion_NE_dd*1e3:.2f} g/L')
-plt.savefig('tau_135_38_7.4gL.png', dpi=400)
-
-#%%
+#plt.savefig('tau_135_38_7.4gL.png', dpi=400)
 
 temperaturas_intervalo=temperaturas_intervalo[:-1]
 err_temperatura=err_temperatura[:-1]
 promedios_tau=promedios_tau[:-1]
 errores_tau=errores_tau[:-1]
 combined_array = np.vstack((temperaturas_intervalo, err_temperatura,promedios_tau,errores_tau)).T
-np.savetxt('tau_vs_T_NE@citrato_7,4gL.txt', combined_array,header='| T | err T | tau | err tau |' ,fmt=['%f','%f','%e','%e'])
+%np.savetxt('tau_vs_T_NE@citrato_7,4gL.txt', combined_array,header='| T | err T | tau | err tau |' ,fmt=['%f','%f','%e','%e'])
 
 
-
-
-
-
-
-
-
-
-
-
-#%% Ploteo ciclos frios
-def lector_ciclos(path):
-    '''return meta, files, time,temperatura,  Mr, Hc, campo_max, mag_max, xi_M_0, frecuencia_fund, magnitud_fund , dphi_fem, SAR, tau, N'''
-    
-    with open(path, 'rb') as f:
-        codificacion = chardet.detect(f.read())['encoding']
-        
-    # Leer las primeras 6 líneas y crear un diccionario de meta
-    meta = {}
-    with open(path, 'r', encoding='utf-8') as f:
-        for i in range(6):
-            line = f.readline().strip()
-            if i == 0:
-                match = re.search(r'Temperatura_=_([-+]?\d+\.\d+)', line)
-                if match:
-                    key = 'Temperatura'
-                    value = float(match.group(1))
-                    meta[key] = value
-            else:
-                match = re.search(r'(.+)_=_([-+]?\d+\.\d+)', line)
-                if match:
-                    key = match.group(1).replace(' ', '_')
-                    value = float(match.group(2))
-                    meta[key] = value
-    # Leer los datos del archivo
-    data = pd.read_table(path, header=6,
-                         names=('Tiempo_(s)','Campo_(V.s)','Magnetizacion_(V.s)','Campo_(kA/m)','Magnetizacion_(A/m)'),
-                         usecols=(0, 1, 2, 3, 4),
-                         decimal='.',
-                         engine='python',
-                         encoding=codificacion)
-
-    t = pd.Series(data['Tiempo_(s)']).to_numpy(dtype=float)
-    H_kAm = pd.Series(data['Campo_(kA/m)']).to_numpy(dtype=float)
-    M_Am = pd.Series(data['Magnetizacion_(A/m)']).to_numpy(dtype=float)
-        
-    return meta,t, H_kAm , M_Am
-
-
-
-
-
-
-#%% 2025 agrego taus de pedro
+#%% 2025 Feb agrego taus de pedro
 data1 = np.genfromtxt('reporte_tau_240314_120348_10.txt', delimiter=',', skip_header=1)
 temp_1 = data1[:-1, 0]
 tau_1 = data1[:-1, 1]
@@ -603,8 +569,7 @@ tau_3 = data3[:-1, 1]
 tau_3_stderr = data3[:-1, 2]
 
 #descarto el ultimo punto 
-#%%Promedio los tau por temperatura
-
+#%Promedio los tau por temperatura
 temperatura1 = temp_1 
 tau1 = tau_1
 temperatura2 = temp_2 
@@ -647,20 +612,101 @@ for temp in temperaturas_intervalo_pedro:
 # Convertimos la lista de promedios a un array de numpy
 promedios_tau_pedro = np.array(promedios_tau_pedro)
 err_temperatura_pedro=np.full(len(temperaturas_intervalo_pedro),intervalo_temperatura/2)
-#%%
+#%
 print("Intervalo de Temperatura   |   Promedio de Tau  |")
 print("-------------------------------------------------")
 for i in range(len(temperaturas_intervalo_pedro)):
     print(f"{temperaturas_intervalo_pedro[i]:.2f} - {temperaturas_intervalo_pedro[i] + intervalo_temperatura:.2f} °C |   {promedios_tau_pedro[i]:.2e}")
+#%
+# promedios_tau=np.array(promedios_tau)*1e9
+# errores_tau=np.array(errores_tau)*1e9
+#%% 2025 Abr agrego taus de pedro 3r metodo
+data1 = np.genfromtxt('reporte_tau_a.txt', delimiter=',', skip_header=1)
+temp_1 = data1[:, 0]
+tau_1 = data1[:, 1]
+tau_1_stderr = data1[:, 2]
 
-#%%
-promedios_tau=np.array(promedios_tau)*1e9
-errores_tau=np.array(errores_tau)*1e9
+data2 = np.genfromtxt('reporte_tau_b.txt', delimiter=',', skip_header=1)
+temp_2 = data2[:, 0]
+tau_2 = data2[:, 1]
+tau_2_stderr = data2[:, 2]
 
-#%%
+data3 = np.genfromtxt('reporte_tau_c.txt', delimiter=',', skip_header=1)
+temp_3 = data3[:, 0]
+tau_3 = data3[:, 1]
+tau_3_stderr = data3[:, 2]
+
+fig, ax = plt.subplots(figsize=(9, 4), constrained_layout=True)
+ax.plot(temp_1, tau_1,'.-',label=f'1')
+ax.plot(temp_2, tau_2,'.-',label=f'2')
+#ZZax.plot(temp_3, tau_3,'.-',label=f'3')
+ax.text(0.85,0.35,'NEdd\n$f$ = 135 kHz  $H_0$ = 38 kA/m\nC = 7,4 g/L',bbox=dict(alpha=0.9),transform=ax.transAxes,ha='center',va='center')
+ax.legend(ncol=3)
+ax.grid()
+ax.set_xlabel('T (ºC)')
+ax.set_ylabel(r'$\tau$ (s)')
+ax.set_ylabel(r'$\tau$ (s)')
+ax.set_title(r'$\tau$ vs $T$ - Fundamental')
+
+
+#% Promedio los tau por temperatura
+temperatura1 = temp_1 
+tau1 = tau_1
+temperatura2 = temp_2 
+tau2 = tau_2
+temperatura3 = temp_3 
+tau3 = tau_3
+
+#recorto a -20 - 20 °C
+indx_1 = np.nonzero((temperatura1>=-20)&(temperatura1<=20))
+indx_2 = np.nonzero((temperatura2>=-20)&(temperatura2<=20))
+indx_3 = np.nonzero((temperatura3>=-20)&(temperatura3<=20))
+
+temperatura1=temperatura1[indx_1] 
+tau1=tau1[indx_1] 
+
+temperatura2=temperatura2[indx_2] 
+tau2=tau2[indx_2]
+
+temperatura3=temperatura3[indx_3] 
+tau3=tau3[indx_3]
+
+# Concatenamos todas las temperaturas y taus
+temperatura_total = np.concatenate((temperatura1, temperatura2, temperatura3))
+tau_total = np.concatenate((tau1, tau2, tau3))
+
+# Definimos los intervalos de temperatura
+intervalo_temperatura = 1
+temperaturas_intervalo_pedro_2 = np.arange(np.min(temperatura_total), np.max(temperatura_total) + intervalo_temperatura, intervalo_temperatura)
+
+# Lista para almacenar los promedios de tau
+promedios_tau_pedro_2 = []
+errores_tau_pedro_2 =[]
+# Iteramos sobre los intervalos de temperatura
+for temp in temperaturas_intervalo_pedro_2:
+    # Seleccionamos los valores de tau correspondientes al intervalo de temperatura actual
+    tau_intervalo = tau_total[(temperatura_total >= temp) & (temperatura_total < temp + intervalo_temperatura)]
+    # Calculamos el promedio y lo agregamos a la lista
+    promedios_tau_pedro_2.append(np.mean(tau_intervalo))
+    errores_tau_pedro_2.append(np.std(tau_intervalo))
+# Convertimos la lista de promedios a un array de numpy
+promedios_tau_pedro_2 = np.array(promedios_tau_pedro_2)
+err_temperatura_pedro_2=np.full(len(temperaturas_intervalo_pedro_2),intervalo_temperatura/2)
+
+print("Intervalo de Temperatura   |   Promedio de Tau  |")
+print("-------------------------------------------------")
+for i in range(len(temperaturas_intervalo_pedro_2)):
+    print(f"{temperaturas_intervalo_pedro_2[i]:.2f} - {temperaturas_intervalo_pedro_2[i] + intervalo_temperatura:.2f} °C |   {promedios_tau_pedro_2[i]:.2e}")
+
+promedios_tau_pedro_2=np.array(promedios_tau_pedro_2)*1e9
+errores_tau_pedro_2=np.array(errores_tau_pedro_2)*1e9
+
+#%% Plots
 
 label_1='$\\tan (\phi_1) /\omega$'
 label_2='$M(t)$ fitting'
+label_3='$M(t)$ nuevo metodo'
+
 fig, ax = plt.subplots(figsize=(7, 3.5), constrained_layout=True)
 ax.errorbar(x=temperaturas_intervalo,y=promedios_tau,xerr=err_temperatura,yerr=errores_tau,capsize=4,
 fmt='.-',color='C1',label=label_1)
@@ -668,20 +714,18 @@ fmt='.-',color='C1',label=label_1)
 ax.errorbar(x=temperaturas_intervalo_pedro,y=promedios_tau_pedro,xerr=err_temperatura_pedro,yerr=errores_tau_pedro,
 capsize=4,fmt='.-',color='C2',label=label_2)
 
-
-#ax.errorbar(x=temperatura,y=tau_ed,yerr=tau_ed_stderr,capsize=4,fmt='.-')
-
-# ax.errorbar(x=temp_1,y=tau_1,yerr=tau_1_stderr,capsize=4,fmt='.-')
-# ax.errorbar(x=temp_2,y=tau_2,yerr=tau_2_stderr,capsize=4,fmt='.-')
-# ax.errorbar(x=temp_3,y=tau_3,yerr=tau_3_stderr,capsize=4,fmt='.-')
+ax.errorbar(x=temperaturas_intervalo_pedro_2,y=promedios_tau_pedro_2,xerr=err_temperatura_pedro_2,yerr=errores_tau_pedro_2,
+capsize=4,fmt='.-',color='C3',label=label_3)
 
 plt.legend(ncol=1,fontsize=13)
 plt.grid()
 plt.xlabel('Temperature (°C)')
-plt.ylabel(r'$\tau$ (s)')
+plt.ylabel(r'$\tau$ (ns)')
 plt.xlim(-21,21)
 # plt.title(f'135 kHz - 38 kA/m - {Concentracion_NE_dd*1e3:.2f} g/L')
-plt.savefig('tau_135_38_ddiluid_vs_tau_Pedro.png',facecolor='w',dpi=400)
+#plt.savefig('tau_135_38_ddiluid_vs_tau_Pedro.png',facecolor='w',dpi=400)
 plt.show()
+
+
 
 # %%

@@ -1648,10 +1648,15 @@ def fourier_señales_5(t,v,v_r_m,delta_t,polaridad,filtro,frec_limite,name,figur
     fases_impar= fase[indx_impar]
     #09 Feb 24 Unwrapeo las fases
     #16 Feb 24 Tambbien las divido mod 2pi 
-    fases_unw = np.unwrap(fases%(2*np.pi))
-    fases_impar_unw = np.unwrap(fases_impar%(2*np.pi))
-    fases_r = np.unwrap(fases_r%(2*np.pi))
-
+    
+    # 18 mar 25: pruebo sin unwrapear ni dividir por mod 2pi para laburar las fases 
+    # fases_unw = np.unwrap(fases%(2*np.pi))
+    # fases_impar_unw = np.unwrap(fases_impar%(2*np.pi))
+    # fases_r = np.unwrap(fases_r%(2*np.pi))
+    fases_unw=fases
+    fases_impar_unw=fases_impar
+    fases_r=fases_r
+    
     del indx_par[0]
     f_par= f[indx_par] 
     amp_par= g[indx_par]
