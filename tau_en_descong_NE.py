@@ -549,7 +549,7 @@ err_temperatura=err_temperatura[:-1]
 promedios_tau=promedios_tau[:-1]
 errores_tau=errores_tau[:-1]
 combined_array = np.vstack((temperaturas_intervalo, err_temperatura,promedios_tau,errores_tau)).T
-%np.savetxt('tau_vs_T_NE@citrato_7,4gL.txt', combined_array,header='| T | err T | tau | err tau |' ,fmt=['%f','%f','%e','%e'])
+np.savetxt('tau_vs_T_NE@citrato_7,4gL.txt', combined_array,header='| T | err T | tau | err tau |' ,fmt=['%f','%f','%e','%e'])
 
 
 #%% 2025 Feb agrego taus de pedro

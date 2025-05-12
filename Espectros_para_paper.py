@@ -201,6 +201,63 @@ ax2.set_ylim(0,15)
 #lt.savefig('figura_paper.png',facecolor='w',dpi=500)
 # Mostrar la figura
 plt.show()
+#%% 
+
+import numpy as np
+import pandas as pd
+
+def leer_archivo_histeresis(nombre_archivo):
+    """
+    Lee un archivo CSV con datos de histéresis y devuelve arrays NumPy con los datos.
+    
+    Parámetros:
+    nombre_archivo (str): Ruta del archivo CSV a leer
+    
+    Retorna:
+    tuple: (tiempo, campo, magnetizacion_seno, magnetizacion_ecdif)
+           Todos como arrays de NumPy
+    """
+    try:
+        # Leer el archivo CSV usando pandas
+        df = pd.read_csv(nombre_archivo)
+        
+        # Extraer cada columna y convertir a arrays NumPy
+        tiempo = df['tiempo_s'].to_numpy()
+        campo_fit_Apm = df['campo_fit_Apm'].to_numpy()
+        magnetizacion_fit_Apm_seno = df['magnetizacion_fit_Apm_seno'].to_numpy()
+        magnetizacion_fit_Apm_ecdif = df['magnetizacion_fit_Apm_ecdif'].to_numpy()
+        
+        return tiempo, campo_fit_Apm, magnetizacion_fit_Apm_seno, magnetizacion_fit_Apm_ecdif
+        
+    except FileNotFoundError:
+        print(f"Error: No se encontró el archivo {nombre_archivo}")
+        return None, None, None, None
+    except Exception as e:
+        print(f"Error al leer el archivo: {str(e)}")
+        return None, None, None, None
+
+# Ejemplo de uso:
+tiempo, campo_fit, magnetizacion_fit_Apm_seno, magnetizacion_fit_Apm_ecdif = leer_archivo_histeresis('135kHz_100dA_100Mss_NEdd094_ciclo_H_M_ajustes.csv')
+
+t,_,_,H_kAm,M_Am,metadata = lector_ciclos( '135kHz_100dA_100Mss_NEdd094_ciclo_H_M.txt')
 #%%
 
+fig,(ax1,ax2)= plt.subplots(ncols=2,figsize=(13,13/3),gridspec_kw={'width_ratios': [6,4]},constrained_layout=True)
+ax1.plot(t*1e6, H_kAm/1000,'o-',label='Field')
+ax1.plot(tiempo*1e6, campo_fit/1000,label='Field fit')
+ax1.plot(t*1e6,M_Am/10,'o-',label='Magnetization x100')
+ax1.plot(tiempo*1e6,magnetizacion_fit_Apm_ecdif/10,label='Magnetization fit x100')
 
+ax2.plot(H_kAm/1000,M_Am/1000,'go-',label='Data')
+ax2.plot(campo_fit/1000,magnetizacion_fit_Apm_ecdif/1000,'r-',label='Fit')
+
+ax1.set_ylabel('Field (kA/m) & Magnetization x100 (kA/m)')
+ax1.set_xlabel('Time ($\mu$s)')
+ax2.legend()
+ax1.legend(title='$R^2$: Field 1.00000, Magnetization 0.98625',loc='lower center')
+for a in [ax1,ax2]:
+    a.grid()
+    
+ax2.set_ylabel('Magnetization (kA/m)')
+ax2.set_xlabel('Field (kA/m)')
+plt.savefig('data_vs_fit_t_H.png',dpi=400,facecolor='w')
